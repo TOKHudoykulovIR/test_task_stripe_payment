@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ order.id }}</title>
+</head>
+<body>
+    <h3>Order ID: {{ order.id }}</h3>
+
+    {% for order_item in order.items.all %}
+        Item name: {{ order_item.item.name }}  |  price for one: {{ order_item.item.price }}   |  Quantity: {{ order_item.quantity }}<br>
+    {% endfor %}
+
+    <button id="buy-button">Buy</button>
+
+    <!-- JS библиотека Stripe -->
+    <script src="https://js.stripe.com/v3/"></script>
+
+    <script>
+        const buyButton = document.getElementById('buy-button');
+
+        buyButton.addEventListener('click', async () => {
+            <!-- делаем запрос и получаем session_id -->
+            const response = await fetch(`/buy/{{ order.id }}`);
+            const data = await response.json();
+
+            <!-- инитцализация Stripe -->
+            const stripe = Stripe('ваш_STRIPE_PUBLISHABLE_KEY');
+
+            <!-- редирект полученным session_id -->
+            const { error } = await stripe.redirectToCheckout({
+                sessionId: data.session_id,
+            });
+
+            <!-- если получили ошибку, выводим -->
+            if (error) {
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>
